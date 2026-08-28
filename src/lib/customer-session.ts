@@ -1,10 +1,8 @@
-import { createHash, createHmac, randomInt, timingSafeEqual } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
-import { db, throwIfError } from "@/lib/db";
 
 export const CUSTOMER_SESSION_COOKIE = "customer_phone_session";
-const OTP_TTL_MS = 10 * 60 * 1000;
-const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 
 function sessionSecret() {
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -12,12 +10,6 @@ function sessionSecret() {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
   }
   return secret;
-}
-
-function hashOtp(phone: string, code: string) {
-  return createHash("sha256")
-    .update(`${phone}:${code}:${sessionSecret()}`)
-    .digest("hex");
 }
 
 function signSession(phone: string, expiresAt: number) {
@@ -45,49 +37,6 @@ function verifySessionToken(token: string) {
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
 
   return { phone, expiresAt };
-}
-
-export function generateOtpCode() {
-  return String(randomInt(100000, 1000000));
-}
-
-export async function storeOtp(phone: string, code: string) {
-  const expiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString();
-  const { error } = await db().from("phone_otp_codes").upsert(
-    {
-      phone,
-      code_hash: hashOtp(phone, code),
-      expires_at: expiresAt,
-    },
-    { onConflict: "phone" },
-  );
-  if (error) throw new Error(error.message);
-}
-
-export async function verifyOtp(phone: string, code: string) {
-  const row = throwIfError(
-    await db()
-      .from("phone_otp_codes")
-      .select("code_hash, expires_at")
-      .eq("phone", phone)
-      .maybeSingle(),
-  ) as { code_hash: string; expires_at: string } | null;
-
-  if (!row) return false;
-  if (new Date(row.expires_at).getTime() < Date.now()) {
-    await db().from("phone_otp_codes").delete().eq("phone", phone);
-    return false;
-  }
-
-  const hash = hashOtp(phone, code);
-  const valid =
-    row.code_hash.length === hash.length &&
-    timingSafeEqual(Buffer.from(row.code_hash), Buffer.from(hash));
-
-  if (valid) {
-    await db().from("phone_otp_codes").delete().eq("phone", phone);
-  }
-  return valid;
 }
 
 export function createCustomerSessionValue(phone: string) {

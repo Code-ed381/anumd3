@@ -8,18 +8,18 @@ export default function Icon() {
     (
       <div
         style={{
-          background: "#c45c26",
+          background: "#0B391B",
           width: "100%",
           height: "100%",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "white",
-          fontSize: 92,
-          fontWeight: 700,
+          color: "#E46A14",
+          fontSize: 108,
+          fontWeight: 800,
         }}
       >
-        P
+        A
       </div>
     ),
     { ...size },

@@ -11,7 +11,10 @@ import { sendSms } from "@/lib/sms";
 import type { OwnerRow } from "@/lib/types";
 
 function alertMessage(order: OrderWithDetails) {
-  return `New order! ${order.customer.name} ordered ${itemSummary(order)} for pickup ${utcDateToDateString(order.pickup_date)} ${order.pickup_time}. Total: ${formatGhs(order.total_amount)}. Check dashboard.`;
+  const address = order.delivery_address
+    ? ` Deliver to: ${order.delivery_address}.`
+    : "";
+  return `New order! ${order.customer.name} ordered ${itemSummary(order)} for delivery ${utcDateToDateString(order.pickup_date)} ${order.pickup_time}.${address} Total: ${formatGhs(order.total_amount)}. Check dashboard.`;
 }
 
 export async function notifyOwnerOfPaidOrder(orderId: string) {

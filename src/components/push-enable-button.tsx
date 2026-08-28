@@ -72,7 +72,7 @@ export function PushEnableButton() {
         type="button"
         onClick={() => void enable()}
         disabled={status === "loading" || status === "on"}
-        className="mt-3 rounded-full bg-stone-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="mt-3 rounded-full bg-[color:var(--brand-green-dark)] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
       >
         {status === "on"
           ? "Push enabled"

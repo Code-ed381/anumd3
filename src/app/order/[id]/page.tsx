@@ -13,6 +13,7 @@ type OrderJson = {
   status: string;
   pickupDate: string;
   pickupTime: string;
+  deliveryAddress: string | null;
   totalAmount: number;
   notes: string | null;
   customer: { name: string; phone: string };
@@ -70,7 +71,7 @@ export default function OrderSummaryPage() {
 
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader compact />
+      <SiteHeader />
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6">
         {paying && (
           <div className="mb-4 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">
@@ -85,7 +86,7 @@ export default function OrderSummaryPage() {
               <div>
                 <h2 className="text-2xl font-semibold">Order summary</h2>
                 <p className="mt-1 text-sm text-stone-500">
-                  Pickup {order.pickupDate} at {order.pickupTime}
+                  Delivery {order.pickupDate} at {order.pickupTime}
                 </p>
               </div>
               <StatusBadge status={order.status} />
@@ -96,6 +97,12 @@ export default function OrderSummaryPage() {
               <p className="text-sm text-stone-500">
                 {displayGhanaPhone(order.customer.phone)}
               </p>
+              {order.deliveryAddress && (
+                <p className="mt-2 text-sm text-stone-600">
+                  <span className="font-medium text-stone-800">Deliver to: </span>
+                  {order.deliveryAddress}
+                </p>
+              )}
               <ul className="mt-4 space-y-2 text-sm">
                 {order.items.map((item) => (
                   <li key={item.id} className="flex justify-between gap-2">

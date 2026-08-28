@@ -224,8 +224,8 @@ export default function MenuEditorPage() {
                   onClick={() => toggleWeekday(day.value)}
                   className={`rounded-full px-3 py-1.5 text-sm ${
                     active
-                      ? "bg-[color:var(--accent)] text-white"
-                      : "bg-stone-100 text-stone-600"
+                      ? "bg-[color:var(--brand-green-dark)] text-white"
+                      : "bg-[color:var(--brand-green)]/10 text-[color:var(--brand-green-dark)]"
                   }`}
                 >
                   {day.label}

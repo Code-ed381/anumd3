@@ -42,6 +42,7 @@ export function serializeOrder(order: OrderWithDetails) {
     status: order.status,
     pickupDate: utcDateToDateString(order.pickup_date),
     pickupTime: order.pickup_time,
+    deliveryAddress: order.delivery_address,
     totalAmount: moneyToNumber(order.total_amount),
     notes: order.notes,
     createdAt: order.created_at,

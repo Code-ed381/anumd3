@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { PhoneOtpVerify, phonesMatch } from "@/components/phone-otp-verify";
 import { SiteHeader } from "@/components/site-header";
 import { useCart } from "@/lib/cart";
 import { formatGhs } from "@/lib/money";
@@ -15,14 +16,52 @@ export default function CheckoutPage() {
   const { items, total, clear, pickupDate } = useCart();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [sessionPhone233, setSessionPhone233] = useState<string | null>(null);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [addressConfirmed, setAddressConfirmed] = useState(false);
   const [pickupTime, setPickupTime] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const slots = useMemo(() => getPickupTimeSlots(), []);
-  const pickupDateLabel = pickupDate ? formatScheduleDate(pickupDate) : "";
+  const deliveryDateLabel = pickupDate ? formatScheduleDate(pickupDate) : "";
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/customer/session")
+      .then((res) => res.json().then((json) => ({ ok: res.ok, json })))
+      .then(
+        ({
+          ok,
+          json,
+        }: {
+          ok: boolean;
+          json: { phone?: string; normalizedPhone?: string };
+        }) => {
+          if (cancelled || !ok) return;
+          if (json.normalizedPhone) {
+            setSessionPhone233(json.normalizedPhone);
+            setPhone(json.phone || "");
+            setPhoneVerified(true);
+          }
+        },
+      )
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function handlePhoneChange(value: string) {
+    setPhone(value);
+    if (sessionPhone233 && phonesMatch(sessionPhone233, value)) {
+      setPhoneVerified(true);
+    } else {
+      setPhoneVerified(false);
+    }
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -44,6 +83,18 @@ export default function CheckoutPage() {
       setError("Enter a valid Ghana phone number.");
       return;
     }
+    if (!phoneVerified) {
+      setError("Verify your phone number before placing your order.");
+      return;
+    }
+    if (deliveryAddress.trim().length < 10) {
+      setError("Enter a precise delivery address.");
+      return;
+    }
+    if (!addressConfirmed) {
+      setError("Confirm that your delivery address is correct.");
+      return;
+    }
     const pickupError = validatePickup(pickupDate, pickupTime);
     if (pickupError) {
       setError(pickupError);
@@ -58,7 +109,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           name: name.trim(),
           phone,
-          email: email.trim() || undefined,
+          deliveryAddress: deliveryAddress.trim(),
           pickupDate,
           pickupTime,
           notes: notes.trim() || undefined,
@@ -84,7 +135,7 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="flex min-h-full flex-col">
-        <SiteHeader compact />
+        <SiteHeader />
         <main className="mx-auto w-full max-w-lg flex-1 px-4 py-10 text-center">
           <p className="text-stone-500">Add dishes before checking out.</p>
           <Link
@@ -100,11 +151,11 @@ export default function CheckoutPage() {
 
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader compact />
+      <SiteHeader />
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6">
         <h2 className="text-2xl font-semibold">Checkout</h2>
         <p className="mt-1 text-sm text-stone-600">
-          Pickup on {pickupDateLabel}. Choose a time below.
+          Delivery on {deliveryDateLabel}. Choose a delivery time below.
         </p>
 
         <form onSubmit={(event) => void submit(event)} className="mt-6 space-y-4">
@@ -118,44 +169,76 @@ export default function CheckoutPage() {
               autoComplete="name"
             />
           </label>
+          <div className="space-y-3">
+            <label className="block">
+              <span className="text-sm font-medium">
+                Phone{phoneVerified ? " ✓" : ""}
+              </span>
+              <input
+                required
+                value={phone}
+                onChange={(event) => handlePhoneChange(event.target.value)}
+                placeholder="0241234567"
+                inputMode="tel"
+                disabled={phoneVerified}
+                className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-3 disabled:cursor-not-allowed disabled:bg-stone-50 disabled:text-stone-500"
+                autoComplete="tel"
+              />
+            </label>
+            {!phoneVerified && (
+              <PhoneOtpVerify
+                phone={phone}
+                verified={phoneVerified}
+                compact
+                onVerified={() => {
+                  const normalized = normalizeGhanaPhone(phone);
+                  if (normalized) {
+                    setSessionPhone233(normalized);
+                    setPhoneVerified(true);
+                  }
+                }}
+              />
+            )}
+          </div>
           <label className="block">
-            <span className="text-sm font-medium">Phone</span>
-            <input
+            <span className="text-sm font-medium">Delivery address</span>
+            <textarea
               required
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              placeholder="0241234567"
-              inputMode="tel"
+              value={deliveryAddress}
+              onChange={(event) => setDeliveryAddress(event.target.value)}
+              rows={3}
               className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-3"
-              autoComplete="tel"
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-medium">Email (optional)</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-3"
-              autoComplete="email"
+              placeholder="House number, street, landmark, area, city"
             />
             <span className="mt-1 block text-xs text-stone-500">
-              Used for the payment receipt. If you skip it, we generate a
-              placeholder for Paystack.
+              Be as precise as possible so we can find you.
+            </span>
+          </label>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={addressConfirmed}
+              onChange={(event) => setAddressConfirmed(event.target.checked)}
+              className="mt-1"
+            />
+            <span>
+              I confirm this delivery address is correct. We are not liable for
+              failed or delayed delivery caused by incorrect or incomplete
+              address details.
             </span>
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="text-sm font-medium">Pickup date</span>
+              <span className="text-sm font-medium">Delivery date</span>
               <input
                 type="text"
                 readOnly
-                value={pickupDateLabel}
+                value={deliveryDateLabel}
                 className="mt-1 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-3 text-stone-700"
               />
             </label>
             <label className="block">
-              <span className="text-sm font-medium">Pickup time</span>
+              <span className="text-sm font-medium">Delivery time</span>
               <select
                 required
                 value={pickupTime}
@@ -178,7 +261,7 @@ export default function CheckoutPage() {
               onChange={(event) => setNotes(event.target.value)}
               rows={3}
               className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-3"
-              placeholder="Spice level, extra pack, etc."
+              placeholder="Gate code, directions, spice level, etc."
             />
           </label>
 
@@ -204,7 +287,7 @@ export default function CheckoutPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !phoneVerified}
             className="w-full rounded-full bg-[color:var(--accent)] py-3 text-sm font-medium text-white disabled:opacity-60"
           >
             {loading ? "Placing order…" : "Place order"}

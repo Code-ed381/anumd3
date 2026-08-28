@@ -64,13 +64,13 @@ export function MenuSchedule({ businessName, schedule }: MenuScheduleProps) {
     <div className="flex min-h-full flex-col">
       <SiteHeader />
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6">
-        <p className="text-sm text-stone-600">
-          Pre-order from {businessName} for pickup on your chosen day.
+        <p className="text-sm text-[color:var(--muted)]">
+          Pre-order from {businessName} for delivery on your chosen day.
         </p>
 
         {count > 0 && cartPickupDate && (
-          <div className="mt-4 rounded-2xl border border-stone-200 bg-white p-4 text-sm">
-            <p className="font-medium">
+          <div className="mt-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 text-sm">
+            <p className="font-medium text-[color:var(--foreground)]">
               Cart for{" "}
               {schedule.find((d) => d.date === cartPickupDate)?.dateLabel ??
                 cartPickupDate}
@@ -95,11 +95,11 @@ export function MenuSchedule({ businessName, schedule }: MenuScheduleProps) {
         ) : (
           <>
             <label className="mt-6 block">
-              <span className="text-sm font-medium">Pickup date</span>
+              <span className="text-sm font-medium text-[color:var(--foreground)]">Delivery date</span>
               <select
                 value={selectedDate ?? ""}
                 onChange={(event) => setSelectedDate(event.target.value)}
-                className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-3 text-sm"
+                className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] px-3 py-3 text-sm"
               >
                 {orderableDays.map((day) => (
                   <option key={day.date} value={day.date}>
@@ -113,7 +113,7 @@ export function MenuSchedule({ businessName, schedule }: MenuScheduleProps) {
 
             {selectedDay && (
               <section className="mt-6">
-                <h2 className="text-lg font-semibold">
+                <h2 className="text-lg font-semibold text-[color:var(--brand-green-dark)]">
                   {selectedDay.date === nextDay?.date
                     ? `Next up — ${selectedDay.dateLabel}`
                     : selectedDay.dateLabel}

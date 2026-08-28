@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
@@ -22,30 +23,40 @@ export function OwnerNav() {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-stone-200 bg-white">
+    <header className="sticky top-0 z-20 border-b border-[color:var(--border)] bg-[color:var(--card)]">
+      <div className="h-1 bg-[color:var(--brand-green-dark)]" aria-hidden />
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
-        <nav className="flex gap-1">
-          {LINKS.map((link) => {
-            const active = pathname.startsWith(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium ${
-                  active
-                    ? "bg-[color:var(--accent)] text-white"
-                    : "text-stone-600 hover:bg-stone-100"
-                }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="flex items-center gap-3">
+          <Image
+            src="/logo.jpeg"
+            alt=""
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-lg object-cover ring-1 ring-[color:var(--border)]"
+          />
+          <nav className="flex gap-1">
+            {LINKS.map((link) => {
+              const active = pathname.startsWith(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium ${
+                    active
+                      ? "bg-[color:var(--brand-green-dark)] text-white"
+                      : "text-[color:var(--muted)] hover:bg-[color:var(--brand-green)]/10 hover:text-[color:var(--foreground)]"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
         <button
           type="button"
           onClick={() => void logout()}
-          className="text-sm text-stone-500 hover:text-stone-800"
+          className="text-sm text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
         >
           Log out
         </button>

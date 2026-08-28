@@ -47,15 +47,16 @@ In the Paystack dashboard, set the webhook URL to:
 
 The webhook is the source of truth. The `/order-status/[reference]` page also verifies the transaction so local testing works without a public webhook.
 
-## SMS (Pave360)
+## SMS & OTP (Pave360)
 
-`src/lib/sms.ts` calls:
+Set `PAVE360_API_URL`, `PAVE360_API_KEY`, and `PAVE360_SENDER_ID` in `.env.local`. You need an **approved sender ID** in Pave360.
 
-`POST {PAVE360_API_URL}/api/external/sms/send`
+- **Order alerts** — `src/lib/sms.ts` calls `POST {PAVE360_API_URL}/api/external/sms/send` with `{ phone_number, message, sender_id }`.
+- **Phone verification** — `src/lib/otp.ts` calls Pave360 OTP endpoints:
+  - `POST /api/external/otp/send` — 6-digit numeric code, 10-minute expiry
+  - `POST /api/external/otp/verify` — validates the code; on success the app sets a 90-day session cookie
 
-with header `x-api-key` and body `{ phone_number, message, sender_id }`.
-
-You need an **approved sender ID** in Pave360 (`PAVE360_SENDER_ID`). Alerts are best-effort: a failed SMS/push never undoes a successful payment.
+Without Pave360 credentials, order SMS is skipped and OTP falls back to local dev codes (logged to the server console). Alerts are best-effort: a failed SMS/push never undoes a successful payment.
 
 ## Push notifications
 

@@ -1,17 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf6f1;
-  --foreground: #2c1810;
-  --accent: #c45c26;
-  --accent-dark: #9a4318;
+  --background: #fdfbf7;
+  --foreground: #1f0f07;
+  --accent: #e46a14;
+  --accent-dark: #c45610;
+  --brand-green: #478704;
+  --brand-green-dark: #0b391b;
   --card: #ffffff;
+  --border: #e5ddd0;
+  --muted: #5c4a3d;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
+  --color-brand-green: var(--brand-green);
+  --color-brand-green-dark: var(--brand-green-dark);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -31,4 +40,9 @@ select,
 textarea,
 button {
   font: inherit;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--brand-green) 25%, white);
+  color: var(--foreground);
 }

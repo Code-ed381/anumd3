@@ -11,6 +11,7 @@ type OrderJson = {
   status: string;
   pickupDate: string;
   pickupTime: string;
+  deliveryAddress: string | null;
   totalAmount: number;
   notes: string | null;
   customer: { name: string; phone: string };
@@ -221,8 +222,13 @@ export default function OwnerDashboardPage() {
                 <StatusBadge status={order.status} />
               </div>
               <p className="mt-2 text-sm">
-                Pickup {order.pickupDate} at {order.pickupTime}
+                Delivery {order.pickupDate} at {order.pickupTime}
               </p>
+              {order.deliveryAddress && (
+                <p className="mt-1 text-sm text-stone-600">
+                  {order.deliveryAddress}
+                </p>
+              )}
               <ul className="mt-2 text-sm text-stone-600">
                 {order.items.map((item) => (
                   <li key={item.id}>
@@ -239,7 +245,7 @@ export default function OwnerDashboardPage() {
                   <button
                     type="button"
                     onClick={() => void updateStatus(order.id, next)}
-                    className="rounded-full bg-stone-900 px-3 py-1.5 text-sm font-medium text-white"
+                    className="rounded-full bg-[color:var(--brand-green-dark)] px-3 py-1.5 text-sm font-medium text-white"
                   >
                     {NEXT_LABEL[next]}
                   </button>

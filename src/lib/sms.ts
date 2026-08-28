@@ -1,29 +1,25 @@
 import axios from "axios";
+import { getPave360Config, pave360Headers } from "@/lib/pave360";
 import { toE164Ghana } from "@/lib/phone";
 
 export async function sendSms(to: string, message: string) {
-  const apiUrl = process.env.PAVE360_API_URL;
-  const apiKey = process.env.PAVE360_API_KEY;
-  const senderId = process.env.PAVE360_SENDER_ID;
+  const config = getPave360Config();
 
-  if (!apiUrl || !apiKey || !senderId) {
+  if (!config) {
     console.warn("SMS skipped: Pave360 env vars are not set");
     return { skipped: true as const };
   }
 
   const response = await axios.post(
-    `${apiUrl.replace(/\/$/, "")}/api/external/sms/send`,
+    `${config.apiUrl}/api/external/sms/send`,
     {
       phone_number: toE164Ghana(to),
       message,
-      sender_id: senderId,
+      sender_id: config.senderId,
       name: "Order alert",
     },
     {
-      headers: {
-        "x-api-key": apiKey,
-        "Content-Type": "application/json",
-      },
+      headers: pave360Headers(config.apiKey),
       timeout: 15000,
     },
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
@@ -36,11 +37,21 @@ export default function OwnerLoginPage() {
 
   return (
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col justify-center px-4 py-12">
-      <p className="text-xs font-medium uppercase tracking-[0.16em] text-[color:var(--accent)]">
+      <Image
+        src="/logo.jpeg"
+        alt=""
+        width={80}
+        height={80}
+        className="mx-auto h-20 w-20 rounded-2xl object-cover ring-2 ring-[color:var(--border)]"
+        priority
+      />
+      <p className="mt-6 text-center text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-green)]">
         Owner
       </p>
-      <h1 className="mt-2 text-2xl font-semibold">{getBusinessName()}</h1>
-      <p className="mt-1 text-sm text-stone-600">
+      <h1 className="mt-2 text-center text-2xl font-semibold text-[color:var(--foreground)]">
+        {getBusinessName()}
+      </h1>
+      <p className="mt-1 text-center text-sm text-[color:var(--muted)]">
         Sign in with the account created in the Supabase dashboard.
       </p>
       <form onSubmit={(event) => void submit(event)} className="mt-8 space-y-4">
@@ -51,7 +62,7 @@ export default function OwnerLoginPage() {
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-3"
+            className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] px-3 py-3"
             autoComplete="email"
           />
         </label>
@@ -62,7 +73,7 @@ export default function OwnerLoginPage() {
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-3"
+            className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] px-3 py-3"
             autoComplete="current-password"
           />
         </label>
@@ -70,7 +81,7 @@ export default function OwnerLoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full bg-stone-900 py-3 text-sm font-medium text-white disabled:opacity-60"
+          className="w-full rounded-full bg-[color:var(--brand-green-dark)] py-3 text-sm font-medium text-white hover:opacity-95 disabled:opacity-60"
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>

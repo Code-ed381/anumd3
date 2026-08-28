@@ -60,7 +60,7 @@ export default function OrderStatusPage() {
 
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader compact />
+      <SiteHeader />
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6">
         <h2 className="text-2xl font-semibold">Payment status</h2>
         {checking && (
@@ -72,7 +72,7 @@ export default function OrderStatusPage() {
         {order && (
           <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-4">
             <div className="flex items-center justify-between gap-3">
-              <p className="font-medium">Pickup {order.pickupDate} {order.pickupTime}</p>
+              <p className="font-medium">Delivery {order.pickupDate} {order.pickupTime}</p>
               <StatusBadge status={order.status} />
             </div>
             <ul className="mt-4 space-y-1 text-sm">

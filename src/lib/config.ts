@@ -1,5 +1,7 @@
 export function getBusinessName() {
-  return process.env.NEXT_PUBLIC_BUSINESS_NAME || "Kitchen Pre-Order";
+  return (
+    process.env.NEXT_PUBLIC_BUSINESS_NAME || "Anumde Authentic Ghanaian Meals"
+  );
 }
 
 export function getAppUrl() {

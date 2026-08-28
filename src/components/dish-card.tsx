@@ -38,7 +38,7 @@ export function DishCard({
   }
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
+    <article className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-sm">
       <div className="aspect-[16/10] bg-stone-100">
         {photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -52,7 +52,7 @@ export function DishCard({
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-base font-semibold">{name}</h2>
-          <p className="shrink-0 font-medium text-[color:var(--accent)]">
+          <p className="shrink-0 font-semibold text-[color:var(--brand-green)]">
             {formatGhs(price)}
           </p>
         </div>

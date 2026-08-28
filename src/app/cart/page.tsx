@@ -12,11 +12,11 @@ export default function CartPage() {
 
   return (
     <div className="flex min-h-full flex-col">
-      <SiteHeader compact />
+      <SiteHeader />
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6">
         <h2 className="text-2xl font-semibold">Your cart</h2>
         {pickupLabel && (
-          <p className="mt-1 text-sm text-stone-600">Pickup on {pickupLabel}</p>
+          <p className="mt-1 text-sm text-stone-600">Delivery on {pickupLabel}</p>
         )}
         {items.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-dashed border-stone-300 bg-white p-8 text-center">

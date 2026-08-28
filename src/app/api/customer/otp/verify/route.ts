@@ -3,14 +3,14 @@ import {
   createCustomerSessionValue,
   customerSessionCookieOptions,
   CUSTOMER_SESSION_COOKIE,
-  verifyOtp,
 } from "@/lib/customer-session";
+import { isValidOtpCode, verifyPhoneOtp } from "@/lib/otp";
 import { normalizeGhanaPhone } from "@/lib/phone";
 import { clientKey, rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-const SESSION_MAX_AGE = 7 * 24 * 60 * 60;
+const SESSION_MAX_AGE = 90 * 24 * 60 * 60;
 
 export async function POST(request: Request) {
   if (!rateLimit(`otp-verify:${clientKey(request)}`, 12, 15 * 60 * 1000)) {
@@ -30,19 +30,25 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  if (!/^\d{6}$/.test(code)) {
+  if (!isValidOtpCode(code)) {
     return NextResponse.json(
       { error: "Enter the 6-digit code from your SMS" },
       { status: 400 },
     );
   }
 
-  const valid = await verifyOtp(phone, code);
-  if (!valid) {
-    return NextResponse.json(
-      { error: "Invalid or expired code. Request a new one." },
-      { status: 401 },
-    );
+  try {
+    const valid = await verifyPhoneOtp(phone, code);
+    if (!valid) {
+      return NextResponse.json(
+        { error: "Invalid or expired code. Request a new one." },
+        { status: 401 },
+      );
+    }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Could not verify code";
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 
   const response = NextResponse.json({ ok: true });

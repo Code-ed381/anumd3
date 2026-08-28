@@ -5,13 +5,14 @@ export default function manifest(): MetadataRoute.Manifest {
   const name = getBusinessName();
   return {
     name,
-    short_name: "Pre-Order",
-    description: "Pre-order meals for pickup",
+    short_name: "Anumde",
+    description: "Pre-order authentic Ghanaian meals for delivery",
     start_url: "/menu",
     display: "standalone",
-    background_color: "#faf6f1",
-    theme_color: "#c45c26",
+    background_color: "#fdfbf7",
+    theme_color: "#0b391b",
     icons: [
+      { src: "/logo.jpeg", sizes: "512x512", type: "image/jpeg" },
       { src: "/icon", sizes: "192x192", type: "image/png" },
       { src: "/apple-icon", sizes: "180x180", type: "image/png" },
     ],

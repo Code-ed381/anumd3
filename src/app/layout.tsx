@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import { getBusinessName } from "@/lib/config";
 import "./globals.css";
@@ -14,8 +15,12 @@ export const metadata: Metadata = {
     default: getBusinessName(),
     template: `%s · ${getBusinessName()}`,
   },
-  description: "Pre-order meals for pickup",
+  description: "Pre-order authentic Ghanaian meals for delivery",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [{ url: "/logo.jpeg", type: "image/jpeg" }],
+    apple: [{ url: "/logo.jpeg", type: "image/jpeg" }],
+  },
   appleWebApp: {
     capable: true,
     title: getBusinessName(),
@@ -24,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#c45c26",
+  themeColor: "#0b391b",
   width: "device-width",
   initialScale: 1,
 };
@@ -34,6 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <Providers>{children}</Providers>
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

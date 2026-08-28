@@ -28,5 +28,5 @@ export function toE164Ghana(phone233: string) {
 }
 
 export function placeholderEmailFromPhone(phone233: string) {
-  return `${phone233}@noemail.local`;
+  return `${phone233}@customer.example.com`;
 }

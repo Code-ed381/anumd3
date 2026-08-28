@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { sendCustomerOtpSms } from "@/lib/customer-alerts";
-import { generateOtpCode, storeOtp } from "@/lib/customer-session";
-import { db } from "@/lib/db";
+import { sendPhoneOtp } from "@/lib/otp";
 import { normalizeGhanaPhone } from "@/lib/phone";
 import { clientKey, rateLimit } from "@/lib/rate-limit";
 
@@ -31,33 +29,25 @@ export async function POST(request: Request) {
     );
   }
 
-  const code = generateOtpCode();
-  await storeOtp(phone, code);
-
   try {
-    const smsResult = await sendCustomerOtpSms(phone, code);
-    const skipped = "skipped" in smsResult;
-
-    if (skipped) {
-      console.warn(`OTP for ${phone}: ${code} (SMS not configured)`);
-    }
+    const result = await sendPhoneOtp(phone);
 
     const payload: { ok: true; message: string; devCode?: string } = {
       ok: true,
-      message: skipped
-        ? "SMS is not configured. Check server logs for the code in development."
-        : "We sent a verification code to your phone.",
+      message:
+        result.provider === "pave360"
+          ? "We sent a verification code to your phone."
+          : "SMS is not configured. Check server logs for the code in development.",
     };
 
-    if (skipped && process.env.NODE_ENV === "development") {
-      payload.devCode = code;
+    if (result.provider === "local" && result.devCode) {
+      payload.devCode = result.devCode;
     }
 
     return NextResponse.json(payload);
   } catch (error) {
-    await db().from("phone_otp_codes").delete().eq("phone", phone);
     const message =
-      error instanceof Error ? error.message : "Could not send SMS";
+      error instanceof Error ? error.message : "Could not send verification code";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

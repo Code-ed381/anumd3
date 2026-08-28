@@ -61,6 +61,7 @@ export type OrderRow = {
   customer_id: string;
   pickup_date: string;
   pickup_time: string;
+  delivery_address: string | null;
   status: OrderStatus;
   total_amount: number | string;
   notes: string | null;
