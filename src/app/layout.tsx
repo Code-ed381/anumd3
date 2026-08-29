@@ -19,8 +19,8 @@ export const metadata: Metadata = {
   description: "Pre-order authentic Ghanaian meals for delivery",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [{ url: "/logo.jpeg", type: "image/jpeg" }],
-    apple: [{ url: "/logo.jpeg", type: "image/jpeg" }],
+    icon: "/favicon.jpeg",
+    apple: "/logo.jpeg",
   },
   appleWebApp: {
     capable: true,
