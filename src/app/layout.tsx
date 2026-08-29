@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 import { getBusinessName } from "@/lib/config";
 import "./globals.css";
 
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <Providers>{children}</Providers>
         <Toaster position="top-center" richColors />
+        <WhatsAppButton phone={process.env.OWNER_PHONE || ""} />
       </body>
     </html>
   );
