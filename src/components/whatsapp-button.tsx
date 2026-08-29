@@ -1,10 +1,15 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 type WhatsAppButtonProps = {
   phone: string;
 };
 
 export function WhatsAppButton({ phone }: WhatsAppButtonProps) {
+  const pathname = usePathname();
+  if (pathname.startsWith("/owner")) return null;
+
   const digits = phone.replace(/[^0-9]/g, "");
   const message = encodeURIComponent(
     "Hi, I'm interested in placing a bulk order.",
@@ -19,7 +24,7 @@ export function WhatsAppButton({ phone }: WhatsAppButtonProps) {
       aria-label="Contact us on WhatsApp for bulk orders"
       className="fixed bottom-6 right-6 z-50 flex items-center gap-2"
     >
-      <span className="hidden rounded-full bg-white px-3 py-1.5 text-xs font-medium text-stone-700 shadow-md sm:block">
+      <span className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-stone-700 shadow-md">
         Bulk orders
       </span>
       <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-110">
