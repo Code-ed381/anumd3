@@ -82,7 +82,12 @@ export function DishExtrasManager({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_available: !isAvailable }),
     });
-    await load();
+    const url = isGlobal
+      ? "/api/dish-extras"
+      : `/api/dish-extras?dishId=${dishId}`;
+    const res = await fetch(url);
+    const json = (await res.json()) as { extras?: Extra[] };
+    if (json.extras) setExtras(json.extras);
   }
 
   return (
