@@ -11,6 +11,7 @@ import {
   upcomingDatesForDish,
 } from "@/lib/schedule";
 import { dateStringToUtcNoon, validatePickup } from "@/lib/pickup";
+import { getPickupSettings } from "@/lib/business-settings";
 import { notifyCustomerOrderPlaced } from "@/lib/customer-alerts";
 import { getVerifiedCustomerPhone } from "@/lib/customer-session";
 import { normalizeGhanaPhone } from "@/lib/phone";
@@ -32,7 +33,11 @@ type OrderBody = {
   pickupDate?: string;
   pickupTime?: string;
   notes?: string;
-  items?: { dishId: string; quantity: number }[];
+  items?: {
+    dishId: string;
+    quantity: number;
+    extras?: { extraId: string; quantity: number }[];
+  }[];
 };
 
 export async function GET(request: Request) {
@@ -161,7 +166,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const pickupError = validatePickup(pickupDate, pickupTime);
+  const pickupSettings = await getPickupSettings();
+  const pickupError = validatePickup(pickupDate, pickupTime, pickupSettings);
   if (pickupError) {
     return NextResponse.json({ error: pickupError }, { status: 400 });
   }
@@ -199,10 +205,25 @@ export async function POST(request: Request) {
     ) as DishRow[];
     const dishMap = new Map(dishes.map((dish) => [dish.id, dish]));
 
+    const allExtraIds = items.flatMap(
+      (item) => item.extras?.map((e) => e.extraId) ?? [],
+    );
+    const extraRows =
+      allExtraIds.length > 0
+        ? (throwIfError(
+            await db().from("dish_extras").select("*").in("id", allExtraIds),
+          ) as { id: string; price: number | string }[])
+        : [];
+    const extraMap = new Map(extraRows.map((e) => [e.id, e]));
+
     const unavailable: string[] = [];
     let total = 0;
-    const orderItems: { dish_id: string; quantity: number; unit_price: number }[] =
-      [];
+    const orderItems: {
+      dish_id: string;
+      quantity: number;
+      unit_price: number;
+      extras: { dish_extra_id: string; quantity: number; unit_price: number }[];
+    }[] = [];
 
     for (const item of items) {
       const dish = dishMap.get(item.dishId);
@@ -238,11 +259,30 @@ export async function POST(request: Request) {
         );
       }
       const unitPrice = moneyToNumber(dish.price);
+
+      const itemExtras: {
+        dish_extra_id: string;
+        quantity: number;
+        unit_price: number;
+      }[] = [];
+      for (const extra of item.extras ?? []) {
+        const extraRow = extraMap.get(extra.extraId);
+        if (!extraRow) continue;
+        const extraPrice = moneyToNumber(extraRow.price);
+        itemExtras.push({
+          dish_extra_id: extra.extraId,
+          quantity: extra.quantity,
+          unit_price: extraPrice,
+        });
+        total += extraPrice * extra.quantity * item.quantity;
+      }
+
       total += unitPrice * item.quantity;
       orderItems.push({
         dish_id: dish.id,
         quantity: item.quantity,
         unit_price: unitPrice,
+        extras: itemExtras,
       });
     }
 
@@ -306,10 +346,34 @@ export async function POST(request: Request) {
       "Could not create order",
     );
 
-    const { error: itemsError } = await db().from("order_items").insert(
-      orderItems.map((item) => ({ ...item, order_id: created.id })),
-    );
-    if (itemsError) throw new Error(itemsError.message);
+    const createdOrderItems: { id: string }[] = [];
+    for (const item of orderItems) {
+      const inserted = throwIfError(
+        await db()
+          .from("order_items")
+          .insert({
+            order_id: created.id,
+            dish_id: item.dish_id,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+          })
+          .select("id")
+          .single(),
+      ) as { id: string };
+      createdOrderItems.push(inserted);
+
+      if (item.extras.length > 0) {
+        const { error: extrasError } = await db().from("order_item_extras").insert(
+          item.extras.map((extra) => ({
+            order_item_id: inserted.id,
+            dish_extra_id: extra.dish_extra_id,
+            quantity: extra.quantity,
+            unit_price: extra.unit_price,
+          })),
+        );
+        if (extrasError) throw new Error(extrasError.message);
+      }
+    }
 
     const order = await getOrderById(created.id);
     if (!order) {

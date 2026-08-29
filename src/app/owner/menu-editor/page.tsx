@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { DishExtrasManager } from "@/components/dish-extras-manager";
 import { formatGhs } from "@/lib/money";
 import { formatWeekdaySummary, WEEKDAY_OPTIONS } from "@/lib/schedule";
 
@@ -172,6 +173,8 @@ export default function MenuEditorPage() {
         photo. Unavailable items are hidden from customers.
       </p>
 
+      <DishExtrasManager dishId={null} isGlobal />
+
       <form
         onSubmit={(event) => void save(event)}
         className="mt-6 space-y-3 rounded-2xl border border-stone-200 bg-white p-4"
@@ -267,6 +270,9 @@ export default function MenuEditorPage() {
             className="mt-1 w-full text-sm"
           />
         </label>
+        {editingId && (
+          <DishExtrasManager dishId={editingId} />
+        )}
         {error && <p className="text-sm text-red-700">{error}</p>}
         <div className="flex gap-2">
           <button

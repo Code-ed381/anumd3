@@ -95,3 +95,29 @@ export type OrderWithDetails = OrderRow & {
   items: OrderItemWithDish[];
   payment: PaymentRow | null;
 };
+
+export type BusinessSettingsRow = {
+  key: string;
+  value: unknown;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DishExtraRow = {
+  id: string;
+  dish_id: string | null;
+  name: string;
+  price: number | string;
+  is_available: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OrderItemExtraRow = {
+  id: string;
+  order_item_id: string;
+  dish_extra_id: string;
+  quantity: number;
+  unit_price: number | string;
+};

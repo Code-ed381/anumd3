@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PhoneOtpVerify, phonesMatch } from "@/components/phone-otp-verify";
@@ -9,7 +9,7 @@ import { useCart } from "@/lib/cart";
 import { formatGhs } from "@/lib/money";
 import { normalizeGhanaPhone } from "@/lib/phone";
 import { formatScheduleDate } from "@/lib/schedule";
-import { getPickupTimeSlots, validatePickup } from "@/lib/pickup";
+import { type PickupSettings, DEFAULT_SETTINGS, getPickupTimeSlots, validatePickup } from "@/lib/pickup";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -24,9 +24,27 @@ export default function CheckoutPage() {
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [slots, setSlots] = useState<string[]>(() => getPickupTimeSlots());
+  const [pickupSettings, setPickupSettings] = useState<PickupSettings>(DEFAULT_SETTINGS);
 
-  const slots = useMemo(() => getPickupTimeSlots(), []);
   const deliveryDateLabel = pickupDate ? formatScheduleDate(pickupDate) : "";
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/pickup-slots")
+      .then((r) => r.json())
+      .then(
+        (json: { slots?: string[]; settings?: PickupSettings }) => {
+          if (cancelled) return;
+          if (json.slots) setSlots(json.slots);
+          if (json.settings) setPickupSettings(json.settings);
+        },
+      )
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,7 +113,7 @@ export default function CheckoutPage() {
       setError("Confirm that your delivery address is correct.");
       return;
     }
-    const pickupError = validatePickup(pickupDate, pickupTime);
+    const pickupError = validatePickup(pickupDate, pickupTime, pickupSettings);
     if (pickupError) {
       setError(pickupError);
       return;
@@ -116,6 +134,10 @@ export default function CheckoutPage() {
           items: items.map((item) => ({
             dishId: item.dishId,
             quantity: item.quantity,
+            extras: item.extras.map((e) => ({
+              extraId: e.extraId,
+              quantity: e.quantity,
+            })),
           })),
         }),
       });
@@ -267,13 +289,27 @@ export default function CheckoutPage() {
 
           <div className="rounded-2xl bg-white p-4">
             <p className="font-medium">Order preview</p>
-            <ul className="mt-2 space-y-1 text-sm text-stone-600">
+            <ul className="mt-2 space-y-2 text-sm text-stone-600">
               {items.map((item) => (
-                <li key={item.dishId} className="flex justify-between gap-2">
-                  <span>
-                    {item.quantity}× {item.name}
-                  </span>
-                  <span>{formatGhs(item.price * item.quantity)}</span>
+                <li key={item.dishId}>
+                  <div className="flex justify-between gap-2">
+                    <span>
+                      {item.quantity}× {item.name}
+                    </span>
+                    <span>{formatGhs(item.price * item.quantity)}</span>
+                  </div>
+                  {item.extras.length > 0 && (
+                    <ul className="ml-4 mt-0.5 space-y-0.5 text-xs text-stone-500">
+                      {item.extras.map((extra) => (
+                        <li key={extra.extraId} className="flex justify-between gap-2">
+                          <span>
+                            {extra.quantity}× {extra.name}
+                          </span>
+                          <span>{formatGhs(extra.price * extra.quantity * item.quantity)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
             </ul>

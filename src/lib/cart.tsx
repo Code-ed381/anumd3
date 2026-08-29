@@ -11,12 +11,20 @@ import {
 } from "react";
 import { formatScheduleDate } from "@/lib/schedule";
 
+export type CartExtra = {
+  extraId: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
 export type CartItem = {
   dishId: string;
   name: string;
   price: number;
   photoUrl: string | null;
   quantity: number;
+  extras: CartExtra[];
 };
 
 type CartContextValue = {
@@ -24,9 +32,10 @@ type CartContextValue = {
   pickupDate: string | null;
   ready: boolean;
   addItem: (
-    item: Omit<CartItem, "quantity">,
+    item: Omit<CartItem, "quantity" | "extras">,
     pickupDate: string,
     quantity?: number,
+    extras?: CartExtra[],
   ) => { ok: true } | { ok: false; error: string };
   setQuantity: (dishId: string, quantity: number) => void;
   removeItem: (dishId: string) => void;
@@ -43,6 +52,10 @@ type StoredCart = {
   items: CartItem[];
 };
 
+function migrateItem(item: CartItem): CartItem {
+  return { ...item, extras: item.extras ?? [] };
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [pickupDate, setPickupDate] = useState<string | null>(null);
@@ -57,10 +70,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (raw) {
           const parsed = JSON.parse(raw) as StoredCart | CartItem[];
           if (Array.isArray(parsed)) {
-            setItems(parsed);
+            setItems(parsed.map(migrateItem));
             setPickupDate(null);
           } else {
-            setItems(parsed.items ?? []);
+            setItems((parsed.items ?? []).map(migrateItem));
             setPickupDate(parsed.pickupDate ?? null);
           }
         }
@@ -83,9 +96,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(
     (
-      item: Omit<CartItem, "quantity">,
+      item: Omit<CartItem, "quantity" | "extras">,
       date: string,
       quantity = 1,
+      extras: CartExtra[] = [],
     ): { ok: true } | { ok: false; error: string } => {
       if (pickupDate && pickupDate !== date) {
         return {
@@ -100,11 +114,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (existing) {
           return current.map((row) =>
             row.dishId === item.dishId
-              ? { ...row, quantity: row.quantity + quantity, price: item.price }
+              ? { ...row, quantity: row.quantity + quantity, extras }
               : row,
           );
         }
-        return [...current, { ...item, quantity }];
+        return [...current, { ...item, quantity, extras }];
       });
       return { ok: true };
     },
@@ -151,7 +165,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeItem,
       clear,
       count: items.reduce((sum, item) => sum + item.quantity, 0),
-      total: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      total: items.reduce(
+        (sum, item) =>
+          sum +
+          item.price * item.quantity +
+          item.extras.reduce((eSum, e) => eSum + e.price * e.quantity, 0) *
+            item.quantity,
+        0,
+      ),
     }),
     [items, pickupDate, ready, addItem, setQuantity, removeItem, clear],
   );

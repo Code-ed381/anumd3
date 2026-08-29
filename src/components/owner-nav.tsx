@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/owner/dashboard", label: "Orders" },
   { href: "/owner/menu-editor", label: "Menu" },
   { href: "/owner/schedule", label: "Schedule" },
+  { href: "/owner/settings", label: "Settings" },
 ];
 
 export function OwnerNav() {

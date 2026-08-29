@@ -1,5 +1,25 @@
 const ACCRA = "Africa/Accra";
 
+export const DEFAULT_SETTINGS = {
+  pickupStartHour: 10,
+  pickupEndHour: 20,
+  slotIntervalMinutes: 30,
+  minLeadHours: 4,
+  sameDayCutoffHour: 14,
+  nextDayCutoffHour: 20,
+  maxAdvanceDays: 14,
+} as const;
+
+export type PickupSettings = {
+  pickupStartHour: number;
+  pickupEndHour: number;
+  slotIntervalMinutes: number;
+  minLeadHours: number;
+  sameDayCutoffHour: number;
+  nextDayCutoffHour: number;
+  maxAdvanceDays: number;
+};
+
 function accraParts(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: ACCRA,
@@ -34,11 +54,12 @@ export function addDaysToDateString(date: string, days: number) {
   return utc.toISOString().slice(0, 10);
 }
 
-export function getPickupTimeSlots() {
+export function getPickupTimeSlots(settings?: PickupSettings) {
+  const s = settings ?? DEFAULT_SETTINGS;
   const slots: string[] = [];
-  for (let hour = 10; hour <= 20; hour += 1) {
+  for (let hour = s.pickupStartHour; hour <= s.pickupEndHour; hour += 1) {
     slots.push(`${String(hour).padStart(2, "0")}:00`);
-    if (hour < 20) {
+    if (s.slotIntervalMinutes === 30 && hour < s.pickupEndHour) {
       slots.push(`${String(hour).padStart(2, "0")}:30`);
     }
   }
@@ -55,31 +76,47 @@ export function utcDateToDateString(date: Date | string) {
   return iso.slice(0, 10);
 }
 
-export function validatePickup(pickupDate: string, pickupTime: string) {
+export function validatePickup(
+  pickupDate: string,
+  pickupTime: string,
+  settings?: PickupSettings,
+) {
+  const s = settings ?? DEFAULT_SETTINGS;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(pickupDate)) {
     return "Choose a valid pickup date";
   }
-  const slots = getPickupTimeSlots();
+  const slots = getPickupTimeSlots(s);
   if (!slots.includes(pickupTime)) {
-    return "Choose a pickup time between 10:00 and 20:00";
+    return `Choose a pickup time between ${String(s.pickupStartHour).padStart(2, "0")}:00 and ${String(s.pickupEndHour).padStart(2, "0")}:00`;
   }
 
   const today = todayInAccra();
-  const max = addDaysToDateString(today, 14);
+  const max = addDaysToDateString(today, s.maxAdvanceDays);
   if (pickupDate < today) {
     return "Pickup date cannot be in the past";
   }
   if (pickupDate > max) {
-    return "Pickup date must be within the next 14 days";
+    return `Pickup date must be within the next ${s.maxAdvanceDays} days`;
   }
 
   if (pickupDate === today) {
     const now = accraParts();
+    const nowMinutes = now.hour * 60 + now.minute;
     const [hours, minutes] = pickupTime.split(":").map(Number);
     const pickupMinutes = hours * 60 + minutes;
-    const earliest = now.hour * 60 + now.minute + 120;
+    const earliest = nowMinutes + s.minLeadHours * 60;
     if (pickupMinutes < earliest) {
-      return "Pickup time must be at least 2 hours from now";
+      return `Pickup time must be at least ${s.minLeadHours} hours from now`;
+    }
+    if (now.hour >= s.sameDayCutoffHour) {
+      return `Same-day orders are no longer available (cutoff: ${String(s.sameDayCutoffHour).padStart(2, "0")}:00)`;
+    }
+  }
+
+  if (pickupDate === addDaysToDateString(today, 1)) {
+    const now = accraParts();
+    if (now.hour >= s.nextDayCutoffHour) {
+      return `Next-day orders are no longer available (cutoff: ${String(s.nextDayCutoffHour).padStart(2, "0")}:00). Try a later date.`;
     }
   }
 
